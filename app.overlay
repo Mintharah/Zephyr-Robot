@@ -1,0 +1,92 @@
+/* boards/blackpill.overlay */
+
+/ {
+    aliases {
+        tb-uart  = &usart1;   /* host comms */
+        dut-uart = &usart2;   /* passthrough to DUT */
+        dut-spi  = &spi1;
+        dut-pwm = &dut_pwm_pin;
+    };
+
+    /* Dio pins  */
+    zephyr,user {
+        dio-gpios = <&gpiob 3 GPIO_ACTIVE_HIGH>, /* DIO0 = PB3 */
+                    <&gpiob 4 GPIO_ACTIVE_HIGH>, /* DIO1 = PB4 */
+                    <&gpiob 5 GPIO_ACTIVE_HIGH>, /* DIO2 = PB5 */
+                    <&gpiob 6 GPIO_ACTIVE_HIGH>;   /* DIO3 = PB6 */
+
+        /* ADC channel */
+        io-channels = <&adc1 1>;           /* PA1 = AIN1 */
+    };
+
+    pwm_out: pwm_out {
+        compatible = "pwm-leds";           /* reuse binding for single pwm */
+        dut_pwm_pin: dut_pwm_pin {
+            pwms = <&timers3_pwm 2 1000000 PWM_POLARITY_NORMAL>;
+            /* CH3 = index 2 (0-based), default period 1 ms */
+        };
+    };
+};
+
+
+/* Host comms UART */
+&usart1 {
+    status = "okay";
+    current-speed = <115200>;
+    pinctrl-0 = <&usart1_tx_pa9 &usart1_rx_pa10>;
+    pinctrl-names = "default";
+};
+
+/* DUT UART passthrough */
+&usart2 {
+    status = "okay";
+    current-speed = <115200>;
+    pinctrl-0 = <&usart2_tx_pa2 &usart2_rx_pa3>;
+    pinctrl-names = "default";
+};
+
+/* SPI to DUT */
+&spi1 {
+    status = "okay";
+
+    pinctrl-0 = <
+    &spi1_sck_pa5
+    &spi1_miso_pa6
+    &spi1_mosi_pa7
+    >;
+
+    pinctrl-names = "default";
+
+    cs-gpios = <&gpioa 4 GPIO_ACTIVE_LOW>;
+};
+
+/* ADC */
+&adc1 {
+    status = "okay";
+    #address-cells = <1>;
+    #size-cells = <0>;
+
+    channel@0 {
+        reg = <0>;
+
+        zephyr,gain = "ADC_GAIN_1";
+        zephyr,reference = "ADC_REF_INTERNAL";
+        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+
+        /* PA0 */
+        zephyr,input-positive = <0>;
+    };
+};
+
+/* ── TIM3 CH3 drives PB0 for PWM output ── */
+&timers3 {
+    status = "okay";
+    st,prescaler = <99>;   /* 100 MHz / 100 = 1 MHz tick */
+
+    timers3_pwm: pwm {
+        status = "okay";
+        pinctrl-0 = <&tim3_ch3_pb0>;
+        pinctrl-names = "default";
+    };
+};
+
