@@ -1,0 +1,45 @@
+/ {
+    aliases {
+        dut-uart = &usart2;
+        dut-pwm  = &dut_pwm_pin;
+    };
+
+    zephyr,user {
+        dio-gpios =
+            <&gpiob 3 GPIO_ACTIVE_HIGH>,
+            <&gpiob 4 GPIO_ACTIVE_HIGH>,
+            <&gpiob 5 GPIO_ACTIVE_HIGH>,
+            <&gpiob 6 GPIO_ACTIVE_HIGH>;
+    };
+
+    pwm_out {
+        compatible = "pwm-leds";
+        dut_pwm_pin: dut_pwm_pin {
+            pwms = <&timers3_pwm 2 1000000 PWM_POLARITY_NORMAL>;
+        };
+    };
+};
+
+&usart2 {
+    status = "okay";
+    current-speed = <115200>;
+    pinctrl-0 = <&usart2_tx_pa2 &usart2_rx_pa3>;
+    pinctrl-names = "default";
+};
+
+&spi1 {
+    status = "okay";
+    pinctrl-0 = <&spi1_sck_pa5 &spi1_mosi_pa7 &spi1_miso_pa6>;
+    pinctrl-names = "default";
+    cs-gpios = <&gpioa 4 GPIO_ACTIVE_LOW>;
+};
+
+&timers3 {
+    status = "okay";
+    st,prescaler = <99>;
+    timers3_pwm: pwm {
+        status = "okay";
+        pinctrl-0 = <&tim3_ch3_pb0>;
+        pinctrl-names = "default";
+    };
+};
