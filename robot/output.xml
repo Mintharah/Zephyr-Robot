@@ -1,76 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<robot generator="Robot 7.4.2 (Python 3.12.3 on linux)" generated="2026-05-29T01:18:30.911772" rpa="false" schemaversion="5">
-<suite id="s1" name="Test Pwm" source="/home/yasmine/Downloads/TestBench/robot/test_pwm.robot">
-<test id="s1-t1" name="PWM 50 Percent Duty Cycle" line="6">
-<kw name="Set PWM">
-<msg time="2026-05-29T01:18:30.958204" level="FAIL">No keyword with name 'Set PWM' found.</msg>
-<arg>1000000</arg>
-<arg>500000</arg>
-<status status="FAIL" start="2026-05-29T01:18:30.958147" elapsed="0.000136">No keyword with name 'Set PWM' found.</status>
+<robot generator="Robot 7.4.2 (Python 3.12.3 on linux)" generated="2026-06-10T01:58:53.292521" rpa="false" schemaversion="5">
+<suite id="s1" name="Test Uart" source="/home/yasmine/Downloads/Zephyr-Robot-fixed/Zephyr-Robot/robot/test_uart.robot">
+<test id="s1-t1" name="UART HELLO Returns HELLO" line="8">
+<kw name="Send Uart To Dut" owner="testbench_lib.TestbenchLib">
+<arg>HELLO</arg>
+<doc>Send a string to the DUT via the UART passthrough.</doc>
+<status status="PASS" start="2026-06-10T01:58:53.315649" elapsed="0.104642"/>
 </kw>
-<kw name="Sleep" owner="BuiltIn">
-<arg>0.1s</arg>
-<doc>Pauses the test executed for the given time.</doc>
-<status status="NOT RUN" start="2026-05-29T01:18:30.958526" elapsed="0.000038"/>
+<kw name="Receive Uart From Dut" owner="testbench_lib.TestbenchLib">
+<msg time="2026-06-10T01:58:53.424622" level="INFO">${resp} = HELLO</msg>
+<var>${resp}</var>
+<doc>Receive the DUT's reply via the UART passthrough.</doc>
+<status status="PASS" start="2026-06-10T01:58:53.420876" elapsed="0.003854"/>
 </kw>
-<status status="FAIL" start="2026-05-29T01:18:30.956758" elapsed="0.002043">No keyword with name 'Set PWM' found.</status>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${resp}</arg>
+<arg>HELLO</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-10T01:58:53.425122" elapsed="0.001228"/>
+</kw>
+<status status="PASS" start="2026-06-10T01:58:53.315194" elapsed="0.111520"/>
 </test>
-<test id="s1-t2" name="PWM 25 Percent Duty Cycle" line="10">
-<kw name="Set PWM">
-<msg time="2026-05-29T01:18:30.959983" level="FAIL">No keyword with name 'Set PWM' found.</msg>
-<arg>1000000</arg>
-<arg>250000</arg>
-<status status="FAIL" start="2026-05-29T01:18:30.959933" elapsed="0.000108">No keyword with name 'Set PWM' found.</status>
+<test id="s1-t2" name="UART Empty Response Timeout" line="13">
+<kw name="Receive Uart From Dut" owner="testbench_lib.TestbenchLib">
+<msg time="2026-06-10T01:58:53.731485" level="INFO">${resp} = </msg>
+<var>${resp}</var>
+<doc>Receive the DUT's reply via the UART passthrough.</doc>
+<status status="PASS" start="2026-06-10T01:58:53.427765" elapsed="0.303756"/>
 </kw>
-<kw name="Sleep" owner="BuiltIn">
-<arg>0.1s</arg>
-<doc>Pauses the test executed for the given time.</doc>
-<status status="NOT RUN" start="2026-05-29T01:18:30.960235" elapsed="0.000033"/>
+<kw name="Should Be Empty" owner="BuiltIn">
+<msg time="2026-06-10T01:58:53.731892" level="INFO">Length is 0.</msg>
+<arg>${resp}</arg>
+<doc>Verifies that the given item is empty.</doc>
+<status status="PASS" start="2026-06-10T01:58:53.731655" elapsed="0.000267"/>
 </kw>
-<status status="FAIL" start="2026-05-29T01:18:30.959052" elapsed="0.001429">No keyword with name 'Set PWM' found.</status>
+<status status="PASS" start="2026-06-10T01:58:53.427155" elapsed="0.304854"/>
 </test>
-<test id="s1-t3" name="PWM 100 Percent Duty Cycle" line="14">
-<kw name="Set PWM">
-<msg time="2026-05-29T01:18:30.961818" level="FAIL">No keyword with name 'Set PWM' found.</msg>
-<arg>1000000</arg>
-<arg>1000000</arg>
-<status status="FAIL" start="2026-05-29T01:18:30.961763" elapsed="0.000122">No keyword with name 'Set PWM' found.</status>
-</kw>
-<kw name="Sleep" owner="BuiltIn">
-<arg>0.1s</arg>
-<doc>Pauses the test executed for the given time.</doc>
-<status status="NOT RUN" start="2026-05-29T01:18:30.962097" elapsed="0.000029"/>
-</kw>
-<status status="FAIL" start="2026-05-29T01:18:30.960725" elapsed="0.001586">No keyword with name 'Set PWM' found.</status>
-</test>
-<test id="s1-t4" name="PWM Off" line="18">
-<kw name="Set PWM">
-<msg time="2026-05-29T01:18:30.963483" level="FAIL">No keyword with name 'Set PWM' found.</msg>
-<arg>1000000</arg>
-<arg>0</arg>
-<status status="FAIL" start="2026-05-29T01:18:30.963444" elapsed="0.000088">No keyword with name 'Set PWM' found.</status>
-</kw>
-<kw name="Sleep" owner="BuiltIn">
-<arg>0.1s</arg>
-<doc>Pauses the test executed for the given time.</doc>
-<status status="NOT RUN" start="2026-05-29T01:18:30.963715" elapsed="0.000028"/>
-</kw>
-<status status="FAIL" start="2026-05-29T01:18:30.962560" elapsed="0.001378">No keyword with name 'Set PWM' found.</status>
-</test>
-<status status="FAIL" start="2026-05-29T01:18:30.912894" elapsed="0.051617"/>
+<status status="PASS" start="2026-06-10T01:58:53.293185" elapsed="0.439064"/>
 </suite>
 <statistics>
 <total>
-<stat pass="0" fail="4" skip="0">All Tests</stat>
+<stat pass="2" fail="0" skip="0">All Tests</stat>
 </total>
 <tag>
 </tag>
 <suite>
-<stat name="Test Pwm" id="s1" pass="0" fail="4" skip="0">Test Pwm</stat>
+<stat name="Test Uart" id="s1" pass="2" fail="0" skip="0">Test Uart</stat>
 </suite>
 </statistics>
 <errors>
-<msg time="2026-05-29T01:18:30.955211" level="WARN">Imported library '/home/yasmine/Downloads/TestBench/robot/testbench_lib.py' contains no keywords.</msg>
-<msg time="2026-05-29T01:18:30.956246" level="ERROR">Error in file '/home/yasmine/Downloads/TestBench/robot/test_pwm.robot' on line 3: Variable '${PORT}' not found.</msg>
 </errors>
 </robot>

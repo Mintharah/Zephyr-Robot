@@ -4,15 +4,13 @@
 #include <zephyr/devicetree.h>
 #include "../include/dio_thread.h"
 
-/* Pull the entire gpio array from the overlay in one macro */
 #define ZEPHYR_USER_NODE DT_PATH(zephyr_user)
 
-/* Build a compile-time array of gpio_dt_spec from the dio-gpios property */
 static const struct gpio_dt_spec dios[] = {
     DT_FOREACH_PROP_ELEM_SEP(
         ZEPHYR_USER_NODE, dio_gpios,
-        GPIO_DT_SPEC_GET_BY_IDX,   /* expands each element */
-        (,)                         /* comma separator */
+        GPIO_DT_SPEC_GET_BY_IDX,
+        (,)
     )
 };
 
@@ -31,7 +29,7 @@ void dio_thread(void *a, void *b, void *c)
         k_sem_take(&dio_sem, K_FOREVER);
 
         int pin = atoi(dio_cmd.args[0]);
-        if (pin < 0 || pin >= DIO_PIN_COUNT) {
+        if (pin < 0 || pin >= (int)DIO_PIN_COUNT) {
             snprintf(result, sizeof(result), "ERR:DIO:BAD_PIN\n");
             k_msgq_put(&result_q, result, K_NO_WAIT);
             continue;

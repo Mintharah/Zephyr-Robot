@@ -1,4 +1,3 @@
-#include <zephyr/drivers/pwm.h>
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/pwm.h>
 #include "../include/pwm_thread.h"

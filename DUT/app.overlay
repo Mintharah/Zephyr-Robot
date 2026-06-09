@@ -2,6 +2,7 @@
     aliases {
         dut-uart = &usart2;
         dut-pwm  = &dut_pwm_pin;
+        dut-spi = &spi1;
     };
 
     zephyr,user {
@@ -31,7 +32,6 @@
     status = "okay";
     pinctrl-0 = <&spi1_sck_pa5 &spi1_mosi_pa7 &spi1_miso_pa6>;
     pinctrl-names = "default";
-    cs-gpios = <&gpioa 4 GPIO_ACTIVE_LOW>;
 };
 
 &timers3 {

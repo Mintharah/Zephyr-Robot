@@ -2,38 +2,54 @@
 #include "../include/spi_thread.h"
 
 static const struct device *spi_dev = DEVICE_DT_GET(DT_ALIAS(dut_spi));
-static const struct spi_config spi_config = {
+
+/*
+ * CS GPIO is declared via cs-gpios in the overlay and handled automatically
+ * by the SPI driver — no manual SPI_CS_CONTROL_INIT needed.
+ */
+static struct spi_config spi_cfg = {
     .frequency = 1000000,
-    .operation = SPI_WORD_SET(8) | SPI_TRANSFER_MSB,
-    .cs = SPI_CS_CONTROL_INIT(DT_ALIAS(dut_spi))};
+    .operation = SPI_WORD_SET(8) | SPI_TRANSFER_MSB};
 
 void spi_thread(void *a, void *b, void *c)
 {
     char result[64];
+
     while (1)
     {
         k_sem_take(&spi_sem, K_FOREVER);
-        /* hex bytes space separated, args[0] */
+
+        /* Copy args[0] to a local buffer before strtok modifies it */
+        char argbuf[32];
+        strncpy(argbuf, spi_cmd.args[0], sizeof(argbuf) - 1);
+        argbuf[sizeof(argbuf) - 1] = '\0';
+
         uint8_t tx[16] = {0};
         uint8_t rx[16] = {0};
         int n = 0;
-        char *tok = strtok(spi_cmd.args[0], " ");
+
+        char *tok = strtok(argbuf, " ");
         while (tok && n < 16)
         {
-            tx[n++] = strtol(tok, NULL, 16);
+            tx[n++] = (uint8_t)strtol(tok, NULL, 16);
             tok = strtok(NULL, " ");
         }
-        struct spi_buf tb = {.buf = tx, .len = n};
-        struct spi_buf rb = {.buf = rx, .len = n};
+
+        struct spi_buf tb  = {.buf = tx, .len = n};
+        struct spi_buf rb  = {.buf = rx, .len = n};
         struct spi_buf_set tbs = {.buffers = &tb, .count = 1};
         struct spi_buf_set rbs = {.buffers = &rb, .count = 1};
-        spi_transceive(spi_dev, &spi_config, &tbs, &rbs);
+
+        spi_transceive(spi_dev, &spi_cfg, &tbs, &rbs);
+
+        /* Build hex string with a properly bounded snprintf */
         char hex[48] = {0};
         int pos = 0;
         for (int i = 0; i < n; i++)
         {
-            pos += snprintf(hex + pos, 3, "%02X", rx[i]);
+            pos += snprintf(hex + pos, sizeof(hex) - pos, "%02X", rx[i]);
         }
+
         snprintf(result, sizeof(result), "OK:SPI_XFER:%s\n", hex);
         k_msgq_put(&result_q, result, K_NO_WAIT);
     }

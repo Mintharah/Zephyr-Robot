@@ -37,23 +37,24 @@ K_THREAD_STACK_DEFINE(spi_stack, STACK_SIZE);
 K_THREAD_STACK_DEFINE(dispatch_stack, STACK_SIZE);
 K_THREAD_STACK_DEFINE(uart_pass_stack, STACK_SIZE);
 
-static struct k_thread rx_tid, dispatch_tid, dio_tid, adc_tid, pwm_tid, uart_pass_tid, spi_tid, tx_tid;
+static struct k_thread rx_tid, dispatch_tid, dio_tid, adc_tid, pwm_tid,
+                        uart_pass_tid, spi_tid, tx_tid;
 
-//forward declaration
+/* forward declarations */
 void cmd_rx_thread(void *a, void *b, void *c);
 void result_tx_thread(void *a, void *b, void *c);
 void cmd_dispatch_thread(void *a, void *b, void *c);
 
 int main(void)
 {
-    k_thread_create(&rx_tid, rx_stack, STACK_SIZE, cmd_rx_thread, NULL, NULL, NULL, 3, 0, K_NO_WAIT);
-    k_thread_create(&dispatch_tid, dispatch_stack, STACK_SIZE, cmd_dispatch_thread, NULL, NULL, NULL, 3, 0, K_NO_WAIT);
-    k_thread_create(&dio_tid, dio_stack, STACK_SIZE, dio_thread, NULL, NULL, NULL, 4, 0, K_NO_WAIT);
-    k_thread_create(&adc_tid, adc_stack, STACK_SIZE, adc_thread, NULL, NULL, NULL, 4, 0, K_NO_WAIT);
-    k_thread_create(&pwm_tid, pwm_stack, STACK_SIZE, pwm_thread, NULL, NULL, NULL, 4, 0, K_NO_WAIT);
+    k_thread_create(&rx_tid,       rx_stack,       STACK_SIZE, cmd_rx_thread,       NULL, NULL, NULL, 3, 0, K_NO_WAIT);
+    k_thread_create(&dispatch_tid, dispatch_stack,  STACK_SIZE, cmd_dispatch_thread, NULL, NULL, NULL, 3, 0, K_NO_WAIT);
+    k_thread_create(&dio_tid,      dio_stack,       STACK_SIZE, dio_thread,          NULL, NULL, NULL, 4, 0, K_NO_WAIT);
+    k_thread_create(&adc_tid,      adc_stack,       STACK_SIZE, adc_thread,          NULL, NULL, NULL, 4, 0, K_NO_WAIT);
+    k_thread_create(&pwm_tid,      pwm_stack,       STACK_SIZE, pwm_thread,          NULL, NULL, NULL, 4, 0, K_NO_WAIT);
     k_thread_create(&uart_pass_tid, uart_pass_stack, STACK_SIZE, uart_passthru_thread, NULL, NULL, NULL, 4, 0, K_NO_WAIT);
-    k_thread_create(&spi_tid, spi_stack, STACK_SIZE, spi_thread, NULL, NULL, NULL, 4, 0, K_NO_WAIT);
-    k_thread_create(&tx_tid, tx_stack, STACK_SIZE, result_tx_thread, NULL, NULL, NULL, 3, 0, K_NO_WAIT);
+    k_thread_create(&spi_tid,      spi_stack,       STACK_SIZE, spi_thread,          NULL, NULL, NULL, 4, 0, K_NO_WAIT);
+    k_thread_create(&tx_tid,       tx_stack,        STACK_SIZE, result_tx_thread,    NULL, NULL, NULL, 3, 0, K_NO_WAIT);
     return 0;
 }
 
@@ -73,13 +74,12 @@ static void uart_cb(const struct device *dev, void *user_data)
         if (c == '\n')
         {
             rx_line[rx_pos] = '\0';
-            /*hand off to rx thread */
             cmd_t cmd;
             if (cmd_parse(rx_line, &cmd) == 0)
                 k_msgq_put(&cmd_q, &cmd, K_NO_WAIT);
             rx_pos = 0;
         }
-        else if (rx_pos < sizeof(rx_line) - 1)
+        else if (rx_pos < (int)sizeof(rx_line) - 1)
         {
             rx_line[rx_pos++] = c;
         }

@@ -1,6 +1,8 @@
 *** Settings ***
-Library    testbench_lib.py
 Library    testbench_lib.TestbenchLib    port=${PORT}
+
+*** Variables ***
+${PORT}    /dev/ttyUSB0
 
 *** Test Cases ***
 SPI Single Byte Transfer
