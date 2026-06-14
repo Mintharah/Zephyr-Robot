@@ -3,15 +3,12 @@
 #include <zephyr/sys/ring_buffer.h>
 #include <string.h>
 
-static const struct device *dut_uart = DEVICE_DT_GET(DT_ALIAS(dut_uart));
+static const struct device *loop_uart = DEVICE_DT_GET(DT_ALIAS(loop_uart));
 
-/* Ring buffer to capture bytes arriving from the DUT via ISR.
- * uart_poll_in() does NOT work when CONFIG_UART_INTERRUPT_DRIVEN=y —
- * it always returns -1. We must use an IRQ callback instead. */
-#define DUT_RX_BUF_SIZE 128
-RING_BUF_DECLARE(dut_rx_rb, DUT_RX_BUF_SIZE);
+#define LOOP_RX_BUF_SIZE 128
+RING_BUF_DECLARE(loop_rx_rb, LOOP_RX_BUF_SIZE);
 
-static void dut_uart_rx_cb(const struct device *dev, void *user_data)
+static void loop_uart_rx_cb(const struct device *dev, void *user_data)
 {
     (void)user_data;
 
@@ -20,14 +17,14 @@ static void dut_uart_rx_cb(const struct device *dev, void *user_data)
 
     uint8_t c;
     while (uart_fifo_read(dev, &c, 1) == 1)
-        ring_buf_put(&dut_rx_rb, &c, 1);
+        ring_buf_put(&loop_rx_rb, &c, 1);
 }
 
 void uart_passthru_thread(void *a, void *b, void *c)
 {
-    /* Register ISR and enable RX interrupts on the DUT UART once at startup */
-    uart_irq_callback_user_data_set(dut_uart, dut_uart_rx_cb, NULL);
-    uart_irq_rx_enable(dut_uart);
+    /* Register ISR and enable RX interrupts on the loopback UART once at startup */
+    uart_irq_callback_user_data_set(loop_uart, loop_uart_rx_cb, NULL);
+    uart_irq_rx_enable(loop_uart);
 
     char result[64];
 
@@ -38,12 +35,12 @@ void uart_passthru_thread(void *a, void *b, void *c)
         if (uart_pass_cmd.type == CMD_UART_SEND)
         {
             /* Flush stale bytes from previous transactions */
-            ring_buf_reset(&dut_rx_rb);
+            ring_buf_reset(&loop_rx_rb);
 
             const char *msg = uart_pass_cmd.args[0];
             for (const char *p = msg; *p; p++)
-                uart_poll_out(dut_uart, *p);
-            uart_poll_out(dut_uart, '\n');
+                uart_poll_out(loop_uart, *p);
+            uart_poll_out(loop_uart, '\n');
 
             snprintf(result, sizeof(result), "OK:UART_SEND\n");
             k_msgq_put(&result_q, result, K_NO_WAIT);
@@ -57,7 +54,7 @@ void uart_passthru_thread(void *a, void *b, void *c)
             while (i < (int)(sizeof(rbuf) - 1) && k_uptime_get() < deadline)
             {
                 uint8_t ch;
-                if (ring_buf_get(&dut_rx_rb, &ch, 1) == 1)
+                if (ring_buf_get(&loop_rx_rb, &ch, 1) == 1)
                 {
                     if (ch == '\n' || ch == '\r')
                     {

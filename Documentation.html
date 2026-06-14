@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zephyr-Robot — Hardware Test Bench Data Sheet</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #1c2128;
+    --border: rgba(255,255,255,0.1);
+    --border2: rgba(255,255,255,0.2);
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #1d9e75;
+    --accent-dim: #085041;
+    --accent-light: #9FE1CB;
+    --purple: #7F77DD;
+    --purple-dim: #26215C;
+    --amber: #EF9F27;
+    --amber-dim: #633806;
+    --coral: #D85A30;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --mono: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* Header */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 2.5rem 3rem 2rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+  .header-left {}
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+  h1 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: #fff;
+    line-height: 1.15;
+    margin-bottom: 0.6rem;
+  }
+  .tagline {
+    font-size: 15px;
+    color: var(--muted);
+    max-width: 480px;
+    line-height: 1.55;
+  }
+  .header-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .badge-green { background: var(--accent-dim); color: var(--accent-light); }
+  .badge-purple { background: var(--purple-dim); color: #AFA9EC; }
+  .meta-row {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* Body */
+  .body { padding: 2rem 3rem 4rem; display: flex; flex-direction: column; gap: 2.5rem; }
+
+  /* Section titles */
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Stats row */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+  .stat {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.1rem;
+  }
+  .stat-value { font-size: 1.8rem; font-weight: 700; color: #fff; letter-spacing: -0.02em; line-height: 1; margin-bottom: 4px; }
+  .stat-label { font-size: 12px; color: var(--muted); }
+  .stat-accent .stat-value { color: var(--accent-light); }
+
+  /* Architecture blocks */
+  .arch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+  @media (max-width: 700px) { .arch-grid { grid-template-columns: 1fr; } .header { flex-direction: column; padding: 1.5rem; } .body { padding: 1.5rem; } }
+
+  /* Static arch diagram */
+  .arch-diagram {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+  }
+  .arch-diagram svg { width: 100%; height: auto; display: block; }
+
+  /* Thread table */
+  .thread-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .thread-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .thread-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .thread-table tr:last-child td { border-bottom: none; }
+  .thread-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .prio { display: inline-block; width: 20px; height: 20px; border-radius: 4px; font-size: 11px; font-weight: 700; text-align: center; line-height: 20px; }
+  .prio-3 { background: rgba(29,158,117,0.2); color: var(--accent-light); }
+  .prio-4 { background: rgba(127,119,221,0.2); color: #AFA9EC; }
+  code { font-family: var(--mono); font-size: 12px; background: var(--bg3); padding: 1px 5px; border-radius: 4px; color: #a5d6ff; }
+
+  /* Command protocol */
+  .cmd-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .cmd-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.85rem 1rem;
+  }
+  .cmd-name { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--amber); margin-bottom: 4px; }
+  .cmd-desc { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .cmd-ex { font-family: var(--mono); font-size: 11px; background: var(--bg3); padding: 4px 7px; border-radius: 4px; color: #a5d6ff; display: block; }
+  .cmd-resp { font-family: var(--mono); font-size: 11px; color: var(--accent-light); display: block; margin-top: 3px; }
+
+  /* Pin map */
+  .pin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .pin-table th { text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 6px 10px; border-bottom: 1px solid var(--border); }
+  .pin-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+  .pin-table tr:last-child td { border-bottom: none; }
+  .pin-pin { font-family: var(--mono); font-size: 12px; color: #a5d6ff; }
+  .pin-role { font-size: 12px; color: var(--muted); }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .dot-uart { background: var(--accent); }
+  .dot-spi  { background: var(--purple); }
+  .dot-adc  { background: var(--amber); }
+  .dot-pwm  { background: var(--coral); }
+  .dot-dio  { background: #8b949e; }
+
+  /* Test results */
+  .suite-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .suite-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 0.9rem 1rem;
+  }
+  .suite-name { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .suite-icon { width: 20px; height: 20px; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+  .icon-uart  { background: rgba(29,158,117,0.2); color: var(--accent-light); }
+  .icon-spi   { background: rgba(127,119,221,0.2); color: #AFA9EC; }
+  .icon-adc   { background: rgba(239,159,39,0.2);  color: #FAC775; }
+  .icon-pwm   { background: rgba(216,90,48,0.2);   color: #F0997B; }
+  .icon-dio   { background: rgba(139,148,158,0.2); color: #b0b8c1; }
+  .test-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .test-item { font-size: 12px; display: flex; align-items: center; gap: 6px; color: var(--muted); }
+  .test-pass::before { content: '✓'; color: var(--accent); font-weight: 700; font-size: 11px; }
+  .test-fail::before { content: '✗'; color: #E24B4A; font-weight: 700; font-size: 11px; }
+
+  /* Dynamic arch */
+  .flow-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .flow-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+  }
+  .flow-title { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 0.75rem; }
+  .flow-steps { display: flex; flex-direction: column; gap: 6px; }
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .step-num {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent-dim);
+    color: var(--accent-light);
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+  }
+  .step-text { color: var(--muted); line-height: 1.5; }
+  .step-text strong { color: var(--text); font-weight: 500; }
+
+  /* Footer */
+  .footer {
+    padding: 1.5rem 3rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  @media (max-width: 700px) { .footer { padding: 1rem 1.5rem; flex-direction: column; gap: 8px; text-align: center; } }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="eyebrow">Hardware Test Bench</div>
+    <h1>Zephyr-Robot</h1>
+    <p class="tagline">A Robot Framework-driven test bench for embedded peripherals, running on Zephyr RTOS. Verifies DIO, ADC, PWM, UART, and SPI via a UART ASCII command protocol over serial.</p>
+  </div>
+  <div class="header-meta">
+    <span class="badge badge-green">Zephyr RTOS</span>
+    <span class="badge badge-purple">Robot Framework 7.4</span>
+    <span class="meta-row">Target: STM32 (Blackpill)</span>
+    <span class="meta-row">UART @ 115200 baud</span>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="body">
+
+  <!-- STATS -->
+  <div>
+    <div class="section-title">At a glance</div>
+    <div class="stats">
+      <div class="stat stat-accent">
+        <div class="stat-value">8</div>
+        <div class="stat-label">Zephyr threads</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">5</div>
+        <div class="stat-label">Peripheral suites</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">16</div>
+        <div class="stat-label">CMD queue depth</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">1KB</div>
+        <div class="stat-label">Per-thread stack</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">12-bit</div>
+        <div class="stat-label">ADC resolution</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">1 MHz</div>
+        <div class="stat-label">SPI clock</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATIC ARCHITECTURE -->
+  <div>
+    <div class="section-title">Static architecture</div>
+    <div class="arch-grid">
+      <!-- SVG Block Diagram -->
+      <div class="arch-diagram">
+        <svg viewBox="0 0 420 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="rgba(255,255,255,0.3)"/>
+            </marker>
+            <marker id="arr-g" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#1d9e75"/>
+            </marker>
+          </defs>
+
+          <!-- Host PC -->
+          <rect x="8" y="8" width="100" height="40" rx="6" fill="#161b22" stroke="rgba(29,158,117,0.5)" stroke-width="1"/>
+          <text x="58" y="24" text-anchor="middle" font-size="9" fill="#9FE1CB" font-weight="600" letter-spacing="0.08em">HOST PC</text>
+          <text x="58" y="37" text-anchor="middle" font-size="8" fill="#8b949e">Robot Framework</text>
+
+          <!-- USB/UART line down -->
+          <line x1="58" y1="48" x2="58" y2="86" stroke="#1d9e75" stroke-width="1.5" marker-end="url(#arr-g)"/>
+          <text x="64" y="73" font-size="8" fill="#1d9e75">USART1 115200</text>
+
+          <!-- Testbench MCU box -->
+          <rect x="8" y="88" width="404" height="230" rx="8" fill="rgba(28,33,40,0.8)" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+          <text x="210" y="106" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.4)" font-weight="600" letter-spacing="0.1em">TESTBENCH MCU — STM32 (Blackpill)</text>
+
+          <!-- RX Thread -->
+          <rect x="24" y="114" width="76" height="32" rx="5" fill="#085041" stroke="#1d9e75" stroke-width="0.8"/>
+          <text x="62" y="127" text-anchor="middle" font-size="8" fill="#9FE1CB" font-weight="600">cmd_rx</text>
+          <text x="62" y="138" text-anchor="middle" font-size="7.5" fill="#5DCAA5">prio 3</text>
+
+          <!-- Arrow RX → cmd_q -->
+          <line x1="100" y1="130" x2="130" y2="130" stroke="rgba(255,255,255,0.25)" stroke-width="1" marker-end="url(#arr)"/>
+
+          <!-- cmd_q -->
+          <rect x="132" y="115" width="70" height="30" rx="5" fill="#161b22" stroke="rgba(255,255,255,0.2)" stroke-width="0.8" stroke-dasharray="3,2"/>
+          <text x="167" y="128" text-anchor="middle" font-size="8" fill="#8b949e">cmd_q</text>
+          <text x="167" y="139" text-anchor="middle" font-size="7" fill="#4a5568">depth 16</text>
+
+          <!-- Arrow cmd_q → dispatch -->
+          <line x1="202" y1="130" x2="232" y2="130" stroke="rgba(255,255,255,0.25)" stroke-width="1" marker-end="url(#arr)"/>
+
+          <!-- Dispatch thread -->
+          <rect x="234" y="114" width="82" height="32" rx="5" fill="#085041" stroke="#1d9e75" stroke-width="0.8"/>
+          <text x="275" y="127" text-anchor="middle" font-size="8" fill="#9FE1CB" font-weight="600">cmd_dispatch</text>
+          <text x="275" y="138" text-anchor="middle" font-size="7.5" fill="#5DCAA5">prio 3</text>
+
+          <!-- Peripheral threads row -->
+          <!-- DIO -->
+          <rect x="24" y="175" width="60" height="30" rx="5" fill="#26215C" stroke="#7F77DD" stroke-width="0.8"/>
+          <text x="54" y="188" text-anchor="middle" font-size="8" fill="#AFA9EC" font-weight="600">dio_thread</text>
+          <text x="54" y="198" text-anchor="middle" font-size="7" fill="#7F77DD">prio 4</text>
+          <!-- ADC -->
+          <rect x="96" y="175" width="60" height="30" rx="5" fill="#412402" stroke="#EF9F27" stroke-width="0.8"/>
+          <text x="126" y="188" text-anchor="middle" font-size="8" fill="#FAC775" font-weight="600">adc_thread</text>
+          <text x="126" y="198" text-anchor="middle" font-size="7" fill="#EF9F27">prio 4</text>
+          <!-- PWM -->
+          <rect x="168" y="175" width="60" height="30" rx="5" fill="#4A1B0C" stroke="#D85A30" stroke-width="0.8"/>
+          <text x="198" y="188" text-anchor="middle" font-size="8" fill="#F0997B" font-weight="600">pwm_thread</text>
+          <text x="198" y="198" text-anchor="middle" font-size="7" fill="#D85A30">prio 4</text>
+          <!-- UART -->
+          <rect x="240" y="175" width="68" height="30" rx="5" fill="#085041" stroke="#1d9e75" stroke-width="0.8"/>
+          <text x="274" y="188" text-anchor="middle" font-size="8" fill="#9FE1CB" font-weight="600">uart_passthru</text>
+          <text x="274" y="198" text-anchor="middle" font-size="7" fill="#5DCAA5">prio 4</text>
+          <!-- SPI -->
+          <rect x="320" y="175" width="60" height="30" rx="5" fill="#26215C" stroke="#7F77DD" stroke-width="0.8"/>
+          <text x="350" y="188" text-anchor="middle" font-size="8" fill="#AFA9EC" font-weight="600">spi_thread</text>
+          <text x="350" y="198" text-anchor="middle" font-size="7" fill="#7F77DD">prio 4</text>
+
+          <!-- Semaphore lines from dispatch to peripheral threads -->
+          <line x1="275" y1="146" x2="54" y2="175" stroke="rgba(255,255,255,0.18)" stroke-width="0.8" stroke-dasharray="2,2" marker-end="url(#arr)"/>
+          <line x1="275" y1="146" x2="126" y2="175" stroke="rgba(255,255,255,0.18)" stroke-width="0.8" stroke-dasharray="2,2" marker-end="url(#arr)"/>
+          <line x1="275" y1="146" x2="198" y2="175" stroke="rgba(255,255,255,0.18)" stroke-width="0.8" stroke-dasharray="2,2" marker-end="url(#arr)"/>
+          <line x1="275" y1="146" x2="274" y2="175" stroke="rgba(255,255,255,0.18)" stroke-width="0.8" stroke-dasharray="2,2" marker-end="url(#arr)"/>
+          <line x1="275" y1="146" x2="350" y2="175" stroke="rgba(255,255,255,0.18)" stroke-width="0.8" stroke-dasharray="2,2" marker-end="url(#arr)"/>
+
+          <!-- result_q and TX thread -->
+          <!-- Arrows up from peripheral threads to result_q -->
+          <rect x="130" y="228" width="70" height="28" rx="5" fill="#161b22" stroke="rgba(255,255,255,0.2)" stroke-width="0.8" stroke-dasharray="3,2"/>
+          <text x="165" y="241" text-anchor="middle" font-size="8" fill="#8b949e">result_q</text>
+          <text x="165" y="251" text-anchor="middle" font-size="7" fill="#4a5568">depth 16</text>
+
+          <line x1="54"  y1="205" x2="145" y2="228" stroke="rgba(255,255,255,0.18)" stroke-width="0.8" marker-end="url(#arr)"/>
+          <line x1="126" y1="205" x2="152" y2="228" stroke="rgba(255,255,255,0.18)" stroke-width="0.8" marker-end="url(#arr)"/>
+          <line x1="198" y1="205" x2="165" y2="228" stroke="rgba(255,255,255,0.18)" stroke-width="0.8" marker-end="url(#arr)"/>
+          <line x1="274" y1="205" x2="178" y2="228" stroke="rgba(255,255,255,0.18)" stroke-width="0.8" marker-end="url(#arr)"/>
+          <line x1="350" y1="205" x2="185" y2="228" stroke="rgba(255,255,255,0.18)" stroke-width="0.8" marker-end="url(#arr)"/>
+
+          <!-- result_q → result_tx -->
+          <line x1="200" y1="242" x2="232" y2="242" stroke="rgba(255,255,255,0.25)" stroke-width="1" marker-end="url(#arr)"/>
+
+          <rect x="234" y="229" width="76" height="28" rx="5" fill="#085041" stroke="#1d9e75" stroke-width="0.8"/>
+          <text x="272" y="242" text-anchor="middle" font-size="8" fill="#9FE1CB" font-weight="600">result_tx</text>
+          <text x="272" y="252" text-anchor="middle" font-size="7.5" fill="#5DCAA5">prio 3</text>
+
+          <!-- TX up to USART1 arrow -->
+          <line x1="272" y1="229" x2="272" y2="80" stroke="#1d9e75" stroke-width="1.2" stroke-dasharray="3,2"/>
+          <line x1="272" y1="80" x2="62" y2="48" stroke="#1d9e75" stroke-width="1.2" marker-end="url(#arr-g)"/>
+
+          <!-- Legend -->
+          <rect x="320" y="235" width="78" height="52" rx="5" fill="#0d1117" stroke="rgba(255,255,255,0.1)" stroke-width="0.8"/>
+          <text x="328" y="248" font-size="7.5" fill="#8b949e" font-weight="600">LEGEND</text>
+          <line x1="328" y1="256" x2="345" y2="256" stroke="#1d9e75" stroke-width="1.5"/>
+          <text x="348" y="259" font-size="7" fill="#8b949e">data flow</text>
+          <line x1="328" y1="268" x2="345" y2="268" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-dasharray="2,2"/>
+          <text x="348" y="271" font-size="7" fill="#8b949e">semaphore</text>
+          <line x1="328" y1="280" x2="345" y2="280" stroke="rgba(255,255,255,0.2)" stroke-width="0.8" stroke-dasharray="3,2"/>
+          <text x="348" y="283" font-size="7" fill="#8b949e">queued msg</text>
+        </svg>
+      </div>
+
+      <!-- Thread table -->
+      <div>
+        <table class="thread-table">
+          <thead>
+            <tr>
+              <th>Thread</th>
+              <th>Prio</th>
+              <th>Role</th>
+              <th>Stack</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>cmd_rx</code></td>
+              <td><span class="prio prio-3">3</span></td>
+              <td>IRQ-driven UART RX; parses lines into <code>cmd_t</code>; posts to <code>cmd_q</code></td>
+              <td>1 KB</td>
+            </tr>
+            <tr>
+              <td><code>cmd_dispatch</code></td>
+              <td><span class="prio prio-3">3</span></td>
+              <td>Drains <code>cmd_q</code>; copies cmd into per-thread slot; gives semaphore</td>
+              <td>1 KB</td>
+            </tr>
+            <tr>
+              <td><code>result_tx</code></td>
+              <td><span class="prio prio-3">3</span></td>
+              <td>Drains <code>result_q</code>; transmits response over USART1</td>
+              <td>1 KB</td>
+            </tr>
+            <tr>
+              <td><code>dio_thread</code></td>
+              <td><span class="prio prio-4">4</span></td>
+              <td>GPIO set / get via <code>dio_sem</code>; replies <code>OK:DIO_SET</code> / <code>OK:DIO_GET:&lt;pin&gt;:&lt;val&gt;</code></td>
+              <td>1 KB</td>
+            </tr>
+            <tr>
+              <td><code>adc_thread</code></td>
+              <td><span class="prio prio-4">4</span></td>
+              <td>ADC single-shot on PA0; returns raw 12-bit value via <code>adc_sem</code></td>
+              <td>1 KB</td>
+            </tr>
+            <tr>
+              <td><code>pwm_thread</code></td>
+              <td><span class="prio prio-4">4</span></td>
+              <td>Sets TIM3 CH3 period + pulse via <code>pwm_sem</code></td>
+              <td>1 KB</td>
+            </tr>
+            <tr>
+              <td><code>uart_passthru</code></td>
+              <td><span class="prio prio-4">4</span></td>
+              <td>UART self-loopback on USART2; send or receive with 300 ms timeout</td>
+              <td>1 KB</td>
+            </tr>
+            <tr>
+              <td><code>spi_thread</code></td>
+              <td><span class="prio prio-4">4</span></td>
+              <td>SPI master on SPI1; full-duplex transfer with chip-select on PA4</td>
+              <td>1 KB</td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="font-size:12px;color:var(--muted);margin-top:10px;">All peripheral threads block on their semaphore and push results to the 16-deep <code>result_q</code>. Mailbox pattern: one pending command per thread.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMMAND PROTOCOL -->
+  <div>
+    <div class="section-title">ASCII command protocol</div>
+    <div class="cmd-grid">
+      <div class="cmd-card">
+        <div class="cmd-name">CMD:DIO_SET:&lt;pin&gt;:&lt;val&gt;</div>
+        <div class="cmd-desc">Drive a GPIO pin high or low. Pin 0–3 on GPIOB PB3–PB6.</div>
+        <code class="cmd-ex">CMD:DIO_SET:0:1</code>
+        <code class="cmd-resp">→ OK:DIO_SET</code>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-name">CMD:DIO_GET:&lt;pin&gt;</div>
+        <div class="cmd-desc">Read back the logical level of a GPIO pin.</div>
+        <code class="cmd-ex">CMD:DIO_GET:1</code>
+        <code class="cmd-resp">→ OK:DIO_GET:1:1</code>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-name">CMD:ADC_READ</div>
+        <div class="cmd-desc">Single-shot 12-bit ADC read on PA0. Returns raw counts (0–4095).</div>
+        <code class="cmd-ex">CMD:ADC_READ</code>
+        <code class="cmd-resp">→ OK:ADC_READ:2048</code>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-name">CMD:PWM_SET:&lt;period_ns&gt;:&lt;pulse_ns&gt;</div>
+        <div class="cmd-desc">Set TIM3 CH3 (PB0) period and pulse width in nanoseconds.</div>
+        <code class="cmd-ex">CMD:PWM_SET:1000000:500000</code>
+        <code class="cmd-resp">→ OK:PWM_SET</code>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-name">CMD:UART_SEND:&lt;text&gt;</div>
+        <div class="cmd-desc">Send text out USART2 (PA2 TX → PA3 RX jumper). Clears RX buffer first.</div>
+        <code class="cmd-ex">CMD:UART_SEND:HELLO</code>
+        <code class="cmd-resp">→ OK:UART_SEND</code>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-name">CMD:UART_RECV</div>
+        <div class="cmd-desc">Receive one line looped back on USART2 RX. 300 ms timeout.</div>
+        <code class="cmd-ex">CMD:UART_RECV</code>
+        <code class="cmd-resp">→ OK:UART_RECV:HELLO</code>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-name">CMD:SPI_XFER:&lt;hex bytes&gt;</div>
+        <div class="cmd-desc">Full-duplex SPI transfer on SPI1. Hex bytes space-separated; returns RX as compact hex.</div>
+        <code class="cmd-ex">CMD:SPI_XFER:DE AD BE EF</code>
+        <code class="cmd-resp">→ OK:SPI_XFER:DEADBEEF</code>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-top:12px;">Errors return <code>ERR:&lt;reason&gt;</code>. All frames are newline-terminated. Queue depth = 16 commands; depth = 16 results. Unknown commands respond <code>ERR:UNKNOWN</code>.</p>
+  </div>
+
+  <!-- PIN MAPPING & LOOPBACK CONNECTIONS -->
+  <div>
+    <div class="section-title">Pin mapping — testbench MCU (Blackpill)</div>
+    <div class="arch-grid">
+      <table class="pin-table">
+        <thead>
+          <tr><th>Pin</th><th>Signal</th><th>Function</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="pin-pin"><span class="dot dot-uart"></span>PA9</td><td>USART1 TX</td><td class="pin-role">Host UART output (to PC)</td></tr>
+          <tr><td class="pin-pin"><span class="dot dot-uart"></span>PA10</td><td>USART1 RX</td><td class="pin-role">Host UART input (from PC)</td></tr>
+          <tr><td class="pin-pin"><span class="dot dot-uart"></span>PA2</td><td>USART2 TX</td><td class="pin-role">USART2 loopback TX</td></tr>
+          <tr><td class="pin-pin"><span class="dot dot-uart"></span>PA3</td><td>USART2 RX</td><td class="pin-role">USART2 loopback RX</td></tr>
+          <tr><td class="pin-pin"><span class="dot dot-spi"></span>PA5</td><td>SPI1 SCK</td><td class="pin-role">SPI master clock</td></tr>
+          <tr><td class="pin-pin"><span class="dot dot-spi"></span>PA6</td><td>SPI1 MISO</td><td class="pin-role">SPI master data in</td></tr>
+          <tr><td class="pin-pin"><span class="dot dot-spi"></span>PA7</td><td>SPI1 MOSI</td><td class="pin-role">SPI master data out</td></tr>
+          <tr><td class="pin-pin"><span class="dot dot-spi"></span>PA4</td><td>SPI1 CS</td><td class="pin-role">Chip select (active low)</td></tr>
+          <tr><td class="pin-pin"><span class="dot dot-adc"></span>PA0</td><td>ADC1 IN0</td><td class="pin-role">12-bit ADC input (0–3.3 V)</td></tr>
+          <tr><td class="pin-pin"><span class="dot dot-pwm"></span>PB0</td><td>TIM3 CH3</td><td class="pin-role">PWM output</td></tr>
+          <tr><td class="pin-pin"><span class="dot dot-dio"></span>PB3</td><td>DIO 0</td><td class="pin-role">Digital I/O 0</td></tr>
+          <tr><td class="pin-pin"><span class="dot dot-dio"></span>PB4</td><td>DIO 1</td><td class="pin-role">Digital I/O 1</td></tr>
+          <tr><td class="pin-pin"><span class="dot dot-dio"></span>PB5</td><td>DIO 2</td><td class="pin-role">Digital I/O 2</td></tr>
+          <tr><td class="pin-pin"><span class="dot dot-dio"></span>PB6</td><td>DIO 3</td><td class="pin-role">Digital I/O 3</td></tr>
+        </tbody>
+      </table>
+      <div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:1rem;">Every loop is closed with a jumper between the board's own pins &mdash; no DUT:</p>
+        <table class="pin-table">
+          <thead>
+            <tr><th>Peripheral</th><th>On-board loopback</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>UART</td><td class="pin-role">PA2 (USART2 TX) &rarr; PA3 (USART2 RX) jumper; send returns on RX</td></tr>
+            <tr><td>GPIO</td><td class="pin-role">PB3 &harr; PB4 and PB5 &harr; PB6; drive output pin, read input pin</td></tr>
+            <tr><td>PWM in/out</td><td class="pin-role">PB0 (TIM3 CH3 out) &rarr; PA8 (TIM1 CH1 capture)</td></tr>
+            <tr><td>SPI</td><td class="pin-role">PA7 (MOSI) &harr; PA6 (MISO); master reads back its own bytes</td></tr>
+            <tr><td>ADC in/out</td><td class="pin-role">PA1 (GPIO/DIO4) &rarr; PA0 (ADC); drive high/low for the two rail levels</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- DYNAMIC ARCHITECTURE -->
+  <div>
+    <div class="section-title">Dynamic architecture — command execution flow</div>
+    <div class="flow-row">
+      <div class="flow-box">
+        <div class="flow-title">RX path — host to peripheral</div>
+        <div class="flow-steps">
+          <div class="step"><span class="step-num">1</span><span class="step-text">USART1 interrupt fires on each received byte. <strong>cmd_rx_thread</strong> buffers into <code>rx_line[128]</code> until <code>\n</code>.</span></div>
+          <div class="step"><span class="step-num">2</span><span class="step-text"><strong>cmd_parse()</strong> tokenises the line into a <code>cmd_t</code> struct (type + up to 5 arguments). On success, <code>k_msgq_put()</code> enqueues it to <strong>cmd_q</strong> (non-blocking).</span></div>
+          <div class="step"><span class="step-num">3</span><span class="step-text"><strong>cmd_dispatch_thread</strong> blocks on <code>k_msgq_get()</code>. It switches on <code>cmd.type</code>, copies the command into the target thread's mailbox slot (e.g., <code>dio_cmd</code>), then calls <code>k_sem_give()</code> on the matching semaphore.</span></div>
+          <div class="step"><span class="step-num">4</span><span class="step-text">The woken peripheral thread (prio 4) executes the hardware operation — GPIO toggle, ADC conversion, PWM reconfigure, SPI transceive, or UART bridge.</span></div>
+        </div>
+      </div>
+      <div class="flow-box">
+        <div class="flow-title">TX path — result back to host</div>
+        <div class="flow-steps">
+          <div class="step"><span class="step-num">5</span><span class="step-text">The peripheral thread formats a <code>char[64]</code> response (<code>OK:…</code> or <code>ERR:…</code>) and calls <code>k_msgq_put(&result_q, …)</code>.</span></div>
+          <div class="step"><span class="step-num">6</span><span class="step-text"><strong>result_tx_thread</strong> (prio 3) unblocks from <code>k_msgq_get(&result_q)</code> and transmits each character via <code>uart_poll_out()</code> on USART1.</span></div>
+          <div class="step"><span class="step-num">7</span><span class="step-text">The Python <code>TestbenchLib</code> reads one line over <code>serial.readline()</code> (2 s timeout), checks the <code>OK:</code> prefix, strips the payload, and returns it to the Robot Framework keyword.</span></div>
+        </div>
+      </div>
+      <div class="flow-box">
+        <div class="flow-title">Concurrency model</div>
+        <div class="flow-steps">
+          <div class="step"><span class="step-num">→</span><span class="step-text">Priority-3 threads (RX, dispatch, TX) run at higher priority than priority-4 peripheral threads — command routing never starves behind a slow peripheral operation.</span></div>
+          <div class="step"><span class="step-num">→</span><span class="step-text">Mailbox pattern (one pending <code>cmd_t</code> slot per thread) keeps memory bounded. Dispatch overwrites the slot then gives the semaphore atomically; no race window exists because peripheral threads are lower priority and cannot preempt.</span></div>
+          <div class="step"><span class="step-num">→</span><span class="step-text"><code>CONFIG_TIMESLICING=y</code> ensures same-priority threads (all four prio-4 peripherals) share CPU time if multiple semaphores are signalled in quick succession.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEST RESULTS -->
+  <div>
+    <div class="section-title">Robot Framework test suites</div>
+    <div class="suite-grid">
+      <div class="suite-card">
+        <div class="suite-name">
+          <span class="suite-icon icon-uart">U</span>
+          test_uart.robot
+        </div>
+        <ul class="test-list">
+          <li class="test-item test-pass">UART loopback returns sent text</li>
+          <li class="test-item test-pass">UART empty response timeout</li>
+        </ul>
+      </div>
+      <div class="suite-card">
+        <div class="suite-name">
+          <span class="suite-icon icon-spi">SPI</span>
+          test_spi.robot
+        </div>
+        <ul class="test-list">
+          <li class="test-item test-pass">SPI single byte transfer</li>
+          <li class="test-item test-pass">SPI multi-byte transfer</li>
+          <li class="test-item test-pass">SPI zero byte</li>
+        </ul>
+      </div>
+      <div class="suite-card">
+        <div class="suite-name">
+          <span class="suite-icon icon-adc">ADC</span>
+          test_adc.robot
+        </div>
+        <ul class="test-list">
+          <li class="test-item test-pass">ADC in: within supply range (0–3300 mV)</li>
+          <li class="test-item test-pass">ADC in: readings stable (Δ &lt; 200 mV)</li>
+          <li class="test-item test-pass">ADC out: half scale (1650 mV) reads back</li>
+          <li class="test-item test-pass">ADC out: low level (500 mV) reads back</li>
+          <li class="test-item test-pass">ADC out: monotonic voltage sweep</li>
+        </ul>
+      </div>
+      <div class="suite-card">
+        <div class="suite-name">
+          <span class="suite-icon icon-pwm">PWM</span>
+          test_pwm.robot
+        </div>
+        <ul class="test-list">
+          <li class="test-item test-pass">PWM out: 50% / 25% / full / off</li>
+          <li class="test-item test-pass">PWM in: captures period (≈1 ms)</li>
+          <li class="test-item test-pass">PWM in: captures 50% duty</li>
+          <li class="test-item test-pass">PWM in: tracks 25/50/75% sweep</li>
+        </ul>
+      </div>
+      <div class="suite-card">
+        <div class="suite-name">
+          <span class="suite-icon icon-dio">DIO</span>
+          test_dio.robot
+        </div>
+        <ul class="test-list">
+          <li class="test-item test-pass">Pair 0–1 set high, readback</li>
+          <li class="test-item test-pass">Pair 0–1 set low, readback</li>
+          <li class="test-item test-pass">Pair 2–3 set high, readback</li>
+          <li class="test-item test-pass">Pair 2–3 set low, readback</li>
+          <li class="test-item test-pass">Both pairs toggle (FOR loop)</li>
+        </ul>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-top:12px;">ADC tests average 8 samples to suppress PWM ripple. SPI tests use a PA7→PA6 (MOSI→MISO) jumper so the master reads back its own bytes. DIO tests rely on PB3↔PB4 and PB5↔PB6 GPIO loopback wired on the board.</p>
+  </div>
+
+  <!-- BUILD CONFIG -->
+  <div>
+    <div class="section-title">Build configuration</div>
+    <div class="arch-grid">
+      <div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:0.75rem;">Key <code>prj.conf</code> symbols (testbench):</p>
+        <table class="pin-table">
+          <thead><tr><th>Symbol</th><th>Value</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>CONFIG_UART_INTERRUPT_DRIVEN</code></td><td><code>y</code></td><td class="pin-role">IRQ-driven RX for cmd_rx_thread</td></tr>
+            <tr><td><code>CONFIG_ADC_STM32</code></td><td><code>y</code></td><td class="pin-role">STM32 ADC driver</td></tr>
+            <tr><td><code>CONFIG_PWM_STM32</code></td><td><code>y</code></td><td class="pin-role">STM32 TIM-backed PWM driver</td></tr>
+            <tr><td><code>CONFIG_SPI</code></td><td><code>y</code></td><td class="pin-role">SPI master for SPI1</td></tr>
+            <tr><td><code>CONFIG_TIMESLICING</code></td><td><code>y</code></td><td class="pin-role">Round-robin among prio-4 threads</td></tr>
+            <tr><td><code>CONFIG_HEAP_MEM_POOL_SIZE</code></td><td><code>4096</code></td><td class="pin-role">4 KB heap for runtime allocs</td></tr>
+            <tr><td><code>CONFIG_MAIN_STACK_SIZE</code></td><td><code>2048</code></td><td class="pin-role">2 KB main stack</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:0.75rem;">Robot Framework environment (Python 3.12 venv):</p>
+        <table class="pin-table">
+          <thead><tr><th>Package</th><th>Version</th></tr></thead>
+          <tbody>
+            <tr><td><code>robotframework</code></td><td>7.4.2</td></tr>
+            <tr><td><code>robotframework-seleniumlibrary</code></td><td>6.9.0</td></tr>
+            <tr><td><code>robotframework-requests</code></td><td>0.9.7</td></tr>
+            <tr><td><code>pyserial</code></td><td>3.5</td></tr>
+            <tr><td><code>requests</code></td><td>2.34.2</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:12px;color:var(--muted);margin-top:10px;">Run suites with: <code>robot --variable PORT:/dev/ttyUSB0 robot/</code></p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <span>Zephyr-Robot — Hardware Test Bench Data Sheet</span>
+  <span>STM32 Blackpill · Zephyr RTOS · Robot Framework 7.4 · Generated 2026-06-10</span>
+</div>
+
+</body>
+</html>

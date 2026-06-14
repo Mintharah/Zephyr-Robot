@@ -1,3 +1,23 @@
-zephyrproject/
+# Zephyr build output
 build/
+zephyrproject/
+
+# Editor / OS
 .vscode/
+.DS_Store
+
+# Python virtualenvs (regenerate from robot/requirements.txt)
+robot_env/
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Robot Framework run artifacts
+robot/output.xml
+robot/log.html
+robot/report.html
+robot/report.png
+robot/output.png
+robot/results/
+*.robot.html

@@ -21,7 +21,7 @@ class TestbenchLib:
             self._ser = serial.Serial(
                 self._port, self._baudrate, timeout=self._timeout
             )
-            time.sleep(0.1)  # let the port settle
+            time.sleep(0.1)  # lets the port settle
 
     def close_connection(self):
         """Close the serial port."""
@@ -105,7 +105,7 @@ class TestbenchLib:
     # ------------------------------------------------------------------ #
 
     def set_pwm(self, period_ns, pulse_ns):
-        """Set PWM period and pulse width in nanoseconds.
+        """Set (generate) PWM period and pulse width in nanoseconds. PWM OUT.
 
         Example:
             Set PWM    1000000    500000
@@ -113,30 +113,82 @@ class TestbenchLib:
         response = self._send(f"CMD:PWM_SET:{int(period_ns)}:{int(pulse_ns)}")
         self._check_ok(response, "PWM_SET")
 
+    def read_pwm(self):
+        """Capture (measure) an incoming PWM signal. PWM IN.
+
+        Returns (period_ns, pulse_ns) as integers. Requires a capture
+        channel and a jumper into the capture pin (see app.overlay).
+
+        Example:
+            ${period}    ${pulse}=    Read PWM
+        """
+        response = self._send("CMD:PWM_GET")
+        tokens = self._check_ok(response, "PWM_GET")
+        period_ns = int(tokens[0])
+        pulse_ns = int(tokens[1])
+        return period_ns, pulse_ns
+
+    def read_pwm_frequency_hz(self):
+        """Capture an incoming PWM and return its frequency in Hz. PWM IN.
+
+        Example:
+            ${freq}=    Read PWM Frequency Hz
+        """
+        period_ns, _ = self.read_pwm()
+        if period_ns <= 0:
+            raise AssertionError("Captured PWM period was zero")
+        return round(1e9 / period_ns)
+
+    def read_pwm_duty_percent(self):
+        """Capture an incoming PWM and return its duty cycle in percent. PWM IN.
+
+        Example:
+            ${duty}=    Read PWM Duty Percent
+        """
+        period_ns, pulse_ns = self.read_pwm()
+        if period_ns <= 0:
+            raise AssertionError("Captured PWM period was zero")
+        return round(100.0 * pulse_ns / period_ns)
+
+    _ADC_DRIVE_PIN = 4
+
+    def set_adc_source(self, value):
+        """Drive the ADC input pin high (1) or low (0). ADC OUT.
+
+        With no DAC or RC filter, the analog "output" is a spare GPIO
+        (PA1, exposed as DIO4) jumpered to the ADC pin (PA0). This gives
+        the two rail levels (~3300 mV / ~0 mV) that Read ADC Millivolts
+        can verify.
+
+        Example:
+            Set ADC Source    1
+        """
+        self.set_dio_pin(self._ADC_DRIVE_PIN, value)
+
     # ------------------------------------------------------------------ #
     #  UART passthrough keywords                                           #
     # ------------------------------------------------------------------ #
 
-    def send_uart_to_dut(self, text):
-        """Send a string to the DUT via the UART passthrough.
+    def send_uart(self, text):
+        """Send a string out the loopback UART (USART2 TX -> RX jumper).
 
-        The testbench flushes its RX ring buffer before sending, so
-        Receive UART From DUT will only see the reply to THIS command.
+        The firmware flushes its RX ring buffer before sending, so
+        Receive UART will only see the bytes echoed back for THIS command.
 
         Example:
-            Send UART To DUT    HELLO
+            Send UART    HELLO
         """
         response = self._send(f"CMD:UART_SEND:{text}")
         self._check_ok(response, "UART_SEND")
 
-    def receive_uart_from_dut(self):
-        """Receive the DUT's reply via the UART passthrough.
+    def receive_uart(self):
+        """Receive bytes looped back on the UART (USART2 RX).
 
         Waits up to 300 ms (handled in firmware). Returns empty string
         if nothing arrives.
 
         Example:
-            ${resp}=    Receive UART From DUT
+            ${resp}=    Receive UART
         """
         response = self._send("CMD:UART_RECV")
         tokens = self._check_ok(response, "UART_RECV")

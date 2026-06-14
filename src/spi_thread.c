@@ -1,12 +1,8 @@
 #include <zephyr/drivers/spi.h>
 #include "../include/spi_thread.h"
 
-static const struct device *spi_dev = DEVICE_DT_GET(DT_ALIAS(dut_spi));
+static const struct device *spi_dev = DEVICE_DT_GET(DT_ALIAS(loop_spi));
 
-/*
- * CS GPIO is declared via cs-gpios in the overlay and handled automatically
- * by the SPI driver — no manual SPI_CS_CONTROL_INIT needed.
- */
 static struct spi_config spi_cfg = {
     .frequency = 1000000,
     .operation = SPI_WORD_SET(8) | SPI_TRANSFER_MSB};

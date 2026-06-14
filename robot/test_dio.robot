@@ -6,7 +6,6 @@ ${PORT}    /dev/ttyUSB0
 
 *** Test Cases ***
 DIO Pair 0-1 Set High And Readback
-    # Testbench drives DIO0 (output) → DUT mirrors → DUT DIO1 (output) → Testbench reads DIO1 (input)
     Set DIO Pin    0    1
     ${val}=    Get DIO Pin    1
     Should Be Equal As Integers    ${val}    1
