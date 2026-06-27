@@ -24,14 +24,14 @@
         compatible = "pwm-leds";
         pwm_gen_pin: pwm_gen_pin {
             pwms = <&timers3_pwm 2 1000000 PWM_POLARITY_NORMAL>;
-            /* CH3 = index 2 (0-based), default period 1 ms */
+            /* CH3 = index 3 (0-based), default period 1 ms */
         };
     };
 
     pwm_in: pwm_in {
         compatible = "pwm-leds";
         pwm_cap_pin: pwm_cap_pin {
-            pwms = <&timers1_pwm 0 1000000 PWM_POLARITY_NORMAL>;
+            pwms = <&timers1_pwm 1 1000000 PWM_POLARITY_NORMAL>;
             /* CH1 = index 0 (0-based) */
         };
     };
